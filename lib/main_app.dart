@@ -1,4 +1,5 @@
 import 'package:conversaition/features/common/themes/app_theme.dart';
+import 'package:conversaition/features/welcome_screen/welcome_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainApp extends StatelessWidget {
@@ -17,10 +18,7 @@ class MainApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       home: Builder(
         builder: (context) {
-          return Scaffold(
-            appBar: AppBar(title: Text('CONVERSaiTION')),
-            body: Center(child: Text('Hello World!')),
-          );
+          return WelcomeScreen();
         },
       ),
     );
