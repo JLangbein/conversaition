@@ -1,3 +1,4 @@
+import 'package:conversaition/features/common/themes/app_theme.dart';
 import 'package:flutter/material.dart';
 
 class MainApp extends StatelessWidget {
@@ -5,11 +6,22 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
+    return MaterialApp(
+      // to deactivate the Debug Banner
+      debugShowCheckedModeBanner: false,
+      title: 'Conversaition',
+      // Themes are created with flex_color_scheme
+      theme: AppTheme.use(context, Brightness.light),
+      darkTheme: AppTheme.use(context, Brightness.dark),
+      // mode from settings
+      themeMode: ThemeMode.system,
+      home: Builder(
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(title: Text('CONVERSaiTION')),
+            body: Center(child: Text('Hello World!')),
+          );
+        },
       ),
     );
   }
