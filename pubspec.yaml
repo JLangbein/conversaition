@@ -1,5 +1,5 @@
 name: conversaition
-description: "A new Flutter project."
+description: "A smart conversation language tutor"
 publish_to: 'none'
 version: 0.1.0
 
@@ -9,11 +9,27 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+
+flutter_native_splash:
+  color: "#E2E2FF"
+  image: assets/splash/splash.png
+  android_12:
+    image: assets/splash/android_splash.png
+    color: "#E2E2FF"
+    icon_background_color: "#E2E2FF"
