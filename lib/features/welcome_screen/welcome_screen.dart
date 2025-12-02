@@ -1,3 +1,4 @@
+import 'package:conversaition/features/common/widgets/language_topic_selector_dialogue.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeScreen extends StatelessWidget {
@@ -25,7 +26,13 @@ class WelcomeScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: null,
+        onPressed: () {
+          showDialog(
+            barrierDismissible: true,
+            context: context,
+            builder: (_) => LanguageTopicSelectorDialogue(),
+          );
+        },
         child: Icon(Icons.add),
       ),
     );
