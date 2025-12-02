@@ -44,15 +44,19 @@ class _LanguageTopicSelectorDialogueState
     return AlertDialog(
       title: const Text('Start Conversation'),
       content: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         spacing: 8.0,
         children: [
           Text('Please select the language and the topic of the conversation!'),
-          LanguagePickerDropdown(
-            controller: _languageController,
-            onValuePicked: (_) => setState(() {
-              languagePicked = true;
-            }),
+          SizedBox(
+            width: 287.0,
+            child: LanguagePickerDropdown(
+              controller: _languageController,
+              onValuePicked: (_) => setState(() {
+                languagePicked = true;
+              }),
+            ),
           ),
           DropdownMenu(
             controller: _topicController,
@@ -60,12 +64,14 @@ class _LanguageTopicSelectorDialogueState
             hintText: "Topic",
             inputDecorationTheme: InputDecorationThemeData(
               border: InputBorder.none,
+              suffixIconColor: Theme.of(context).colorScheme.outline,
             ),
             textStyle: Theme.of(context).textTheme.titleMedium,
             width: double.infinity,
             menuStyle: MenuStyle(
               maximumSize: WidgetStatePropertyAll(Size.fromWidth(320.0)),
             ),
+
             onSelected: (_) => setState(() {
               topicPicked = true;
             }),
