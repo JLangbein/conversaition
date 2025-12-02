@@ -1,3 +1,4 @@
+import 'package:conversaition/features/chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:language_picker/language_picker_dropdown.dart';
 import 'package:language_picker/language_picker_dropdown_controller.dart';
@@ -29,6 +30,14 @@ class _LanguageTopicSelectorDialogueState
         _topicController.text.isNotEmpty) {
       debugPrint(_languageController.value.name);
       debugPrint(_topicController.text);
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(
+            language: _languageController.value.name,
+            topic: _topicController.text,
+          ),
+        ),
+      );
     }
   }
 
