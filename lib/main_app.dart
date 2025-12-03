@@ -1,3 +1,4 @@
+
 import 'package:conversaition/features/common/themes/app_theme.dart';
 import 'package:conversaition/features/welcome_screen/welcome_screen.dart';
 import 'package:flutter/material.dart';
@@ -11,16 +12,13 @@ class MainApp extends StatelessWidget {
       // to deactivate the Debug Banner
       debugShowCheckedModeBanner: false,
       title: 'Conversaition',
+      routes: {'/welcome': (context) => WelcomeScreen()},
       // Themes are created with flex_color_scheme
       theme: AppTheme.use(context, Brightness.light),
       darkTheme: AppTheme.use(context, Brightness.dark),
       // mode from settings
       themeMode: ThemeMode.system,
-      home: Builder(
-        builder: (context) {
-          return WelcomeScreen();
-        },
-      ),
+      initialRoute: '/welcome',
     );
   }
 }

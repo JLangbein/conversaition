@@ -1,3 +1,7 @@
+// ignore_for_file: prefer_final_fields
+
+import 'package:conversaition/features/chat/widgets/restart_warning_dialog.dart';
+import 'package:conversaition/features/welcome_screen/welcome_screen.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
 
@@ -18,13 +22,32 @@ class _ChatScreenState extends State<ChatScreen> {
     firstName: 'Chad',
     lastName: 'Gpt',
   );
-  final List<ChatUser> _typingUsers = [];
-  final List<ChatMessage> _messages = [];
+  List<ChatUser> _typingUsers = [];
+  List<ChatMessage> _messages = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Text')),
+      appBar: AppBar(
+        centerTitle: false,
+        primary: true,
+        title: Text('${widget.topic} - ${widget.language}'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0.0, 0.0, 4.0, 0.0),
+            child: FilledButton.tonalIcon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) => RestartWarningDialog(restart: _restart),
+                );
+              },
+              label: Text('Restart'),
+              icon: Icon(Icons.restart_alt_rounded),
+            ),
+          ),
+        ],
+      ),
       body: DashChat(
         currentUser: _currentUser,
         typingUsers: _typingUsers,
@@ -52,5 +75,15 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.insert(0, response);
       _typingUsers.clear();
     });
+  }
+
+  Future<void> _restart() async {
+    await Future.delayed(Duration(microseconds: 1000));
+    setState(() {
+      _messages.clear();
+    });
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
+    }
   }
 }

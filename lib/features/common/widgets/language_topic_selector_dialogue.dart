@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_final_fields
+
 import 'package:conversaition/features/chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:language_picker/language_picker_dropdown.dart';
@@ -15,9 +17,8 @@ class LanguageTopicSelectorDialogue extends StatefulWidget {
 class _LanguageTopicSelectorDialogueState
     extends State<LanguageTopicSelectorDialogue> {
   // Language Picker Controller
-  final _languageController = LanguagePickerDropdownController(
-    Languages.english,
-  );
+  LanguagePickerDropdownController _languageController =
+      LanguagePickerDropdownController(Languages.faroese);
   // Topic Input Controller
   final _topicController = TextEditingController();
 
@@ -30,13 +31,14 @@ class _LanguageTopicSelectorDialogueState
         _topicController.text.isNotEmpty) {
       debugPrint(_languageController.value.name);
       debugPrint(_topicController.text);
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (context) => ChatScreen(
             language: _languageController.value.name,
             topic: _topicController.text,
           ),
         ),
+        (_) => false,
       );
     }
   }
@@ -61,8 +63,12 @@ class _LanguageTopicSelectorDialogueState
           SizedBox(
             width: 287.0,
             child: LanguagePickerDropdown(
+              // the controller functionality doesn't seem to work properly
+              // hence the manual asigning of the value in setState
               controller: _languageController,
-              onValuePicked: (_) => setState(() {
+              onValuePicked: (l) => setState(() {
+                debugPrint(l.name);
+                _languageController.value = l;
                 languagePicked = true;
               }),
             ),
@@ -145,7 +151,7 @@ class _LanguageTopicSelectorDialogueState
         ),
         FilledButton.icon(
           icon: Icon(Icons.check),
-          onPressed: (languagePicked && topicPicked) ? _start : null,
+          onPressed: _start,
           label: Text('Start'),
         ),
       ],
