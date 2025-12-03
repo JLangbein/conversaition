@@ -19,7 +19,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ChatUser _currentUser = ChatUser(id: '1');
-  List<ChatMessage> _messages = [];
 
   @override
   Widget build(BuildContext context) {
@@ -85,13 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Future<void> _restart() async {
-    await Future.delayed(Duration(microseconds: 1000));
-    setState(() {
-      _messages.clear();
-    });
-    if (mounted) {
-      Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
-    }
+  void _restart() {
+    Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
   }
 }
