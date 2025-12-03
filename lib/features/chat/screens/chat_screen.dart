@@ -1,9 +1,11 @@
 // ignore_for_file: prefer_final_fields
 
+import 'package:conversaition/features/chat/cubit/chat_cubit.dart';
+import 'package:conversaition/features/chat/cubit/chat_state.dart';
 import 'package:conversaition/features/chat/widgets/restart_warning_dialog.dart';
-import 'package:conversaition/features/welcome_screen/welcome_screen.dart';
 import 'package:dash_chat_2/dash_chat_2.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key, required this.language, required this.topic});
@@ -17,12 +19,6 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final ChatUser _currentUser = ChatUser(id: '1');
-  final ChatUser _chatGptUser = ChatUser(
-    id: '2',
-    firstName: 'Chad',
-    lastName: 'Gpt',
-  );
-  List<ChatUser> _typingUsers = [];
   List<ChatMessage> _messages = [];
 
   @override
@@ -48,33 +44,45 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: DashChat(
-        currentUser: _currentUser,
-        typingUsers: _typingUsers,
-        onSend: (ChatMessage m) {
-          getResponse(m);
+      body: BlocConsumer<ChatCubit, ChatState>(
+        // in case of Error
+        listener: (context, state) {
+          if (state is ChatHasError) {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: Text('Something went worng'),
+                content: Text(state.errorMessage),
+                actions: [
+                  FilledButton(
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pushNamedAndRemoveUntil('/welcome', (_) => false),
+                    child: Text('Close'),
+                  ),
+                ],
+              ),
+            );
+          }
         },
-        messages: _messages,
+        builder: (context, state) {
+          if (state is ChatInitial) {
+            context.read<ChatCubit>().initialize(widget.language, widget.topic);
+            return Center(child: CircularProgressIndicator());
+          } else if (state is ChatUpdate) {
+            return DashChat(
+              currentUser: _currentUser,
+              typingUsers: state.typingUsers,
+              onSend: (ChatMessage m) {
+                context.read<ChatCubit>().getResponse(m);
+              },
+              messages: state.messages,
+            );
+          }
+          return Center(child: Text('Something is off'));
+        },
       ),
     );
-  }
-
-  Future<void> getResponse(ChatMessage m) async {
-    setState(() {
-      _messages.insert(0, m);
-      _typingUsers.add(_chatGptUser);
-    });
-    debugPrint(m.text);
-    await Future.delayed(Duration(milliseconds: 500));
-    final ChatMessage response = ChatMessage(
-      user: _chatGptUser,
-      createdAt: DateTime.now(),
-      text: 'Repsonse to ${m.text}',
-    );
-    setState(() {
-      _messages.insert(0, response);
-      _typingUsers.clear();
-    });
   }
 
   Future<void> _restart() async {
