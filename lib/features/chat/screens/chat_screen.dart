@@ -18,8 +18,8 @@ class _ChatScreenState extends State<ChatScreen> {
     firstName: 'Chad',
     lastName: 'Gpt',
   );
-  List<ChatUser> _typingUsers = [];
-  List<ChatMessage> _messages = [];
+  final List<ChatUser> _typingUsers = [];
+  final List<ChatMessage> _messages = [];
 
   @override
   Widget build(BuildContext context) {
@@ -27,18 +27,30 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(title: Text('Text')),
       body: DashChat(
         currentUser: _currentUser,
+        typingUsers: _typingUsers,
         onSend: (ChatMessage m) {
           getResponse(m);
-          setState(() {
-            _messages.insert(0, m);
-          });
         },
         messages: _messages,
       ),
     );
   }
-}
 
-Future<void> getResponse(ChatMessage m) async {
-  debugPrint(m.text);
+  Future<void> getResponse(ChatMessage m) async {
+    setState(() {
+      _messages.insert(0, m);
+      _typingUsers.add(_chatGptUser);
+    });
+    debugPrint(m.text);
+    await Future.delayed(Duration(milliseconds: 500));
+    final ChatMessage response = ChatMessage(
+      user: _chatGptUser,
+      createdAt: DateTime.now(),
+      text: 'Repsonse to ${m.text}',
+    );
+    setState(() {
+      _messages.insert(0, response);
+      _typingUsers.clear();
+    });
+  }
 }
