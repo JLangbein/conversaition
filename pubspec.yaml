@@ -7,6 +7,7 @@ environment:
   sdk: ^3.9.2
 
 dependencies:
+  chat_gpt_sdk: ^3.1.5
   dash_chat_2: ^0.0.21
   flex_color_scheme: ^8.3.1
   flutter:
