@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
             showDialog(
               context: context,
               builder: (_) => AlertDialog(
-                title: Text('Something went worng'),
+                title: Text('Something went wrong'),
                 content: Text(state.errorMessage),
                 actions: [
                   FilledButton(
