@@ -27,11 +27,11 @@ class _LanguageTopicSelectorDialogueState
   bool languagePicked = false;
   bool topicPicked = false;
 
+  // method to start the chat navigates to chat screen
+  // and hands over the selected language and topic
   void _start() {
     if (_languageController.value.name.isNotEmpty &&
         _topicController.text.isNotEmpty) {
-      debugPrint(_languageController.value.name);
-      debugPrint(_topicController.text);
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           builder: (context) => ChatScreen(
@@ -147,6 +147,7 @@ class _LanguageTopicSelectorDialogueState
           ),
         ],
       ),
+      // two buttons for cancel and start the conversation
       actions: [
         FilledButton.tonalIcon(
           icon: Icon(Icons.cancel_rounded),

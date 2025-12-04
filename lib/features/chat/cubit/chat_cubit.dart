@@ -233,7 +233,7 @@ class ChatCubit extends Cubit<ChatState> {
     emit(ChatUpdate(_messages, _typingUsers));
   }
 
-  // to delete the assistant and thread on restart and app close
+  // to delete the assistant and thread on restart 
   Future<void> deleteThread() async {
     await openAI.assistant.v2.delete(assistantId: assistantData.id);
     await openAI.threads.v2.deleteThread(threadId: threadResponse.id);

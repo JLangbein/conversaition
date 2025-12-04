@@ -45,6 +45,8 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
+      // BlocConsumer to listen for errors and
+      // build the chat with the states from cubit
       body: BlocConsumer<ChatCubit, ChatState>(
         // in case of Error
         listener: (context, state) {
@@ -67,7 +69,9 @@ class _ChatScreenState extends State<ChatScreen> {
           }
         },
         builder: (context, state) {
+          // CircualrProgressIndicator while being set up
           if (state is ChatInitial) {
+            // call the initialize method
             context.read<ChatCubit>().initialize(widget.language, widget.topic);
             return Center(child: CircularProgressIndicator());
           } else if (state is ChatUpdate) {
@@ -80,12 +84,16 @@ class _ChatScreenState extends State<ChatScreen> {
               messages: state.messages,
             );
           }
+          // fallback if any other state is emitted 
+          // (shouldn't be the case)
           return Center(child: Text('Something is off'));
         },
       ),
     );
   }
 
+  // restart method deletes the thread and assistant 
+  // and navigates back to welcome screen
   void _restart() async {
     await context.read<ChatCubit>().deleteThread();
     if (mounted) {

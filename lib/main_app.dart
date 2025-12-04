@@ -20,7 +20,7 @@ class MainApp extends StatelessWidget {
         // Themes are created with flex_color_scheme
         theme: AppTheme.use(context, Brightness.light),
         darkTheme: AppTheme.use(context, Brightness.dark),
-        // mode from settings
+        // mode from system
         themeMode: ThemeMode.system,
         initialRoute: '/welcome',
       ),

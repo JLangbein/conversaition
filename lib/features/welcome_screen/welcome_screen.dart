@@ -25,6 +25,7 @@ class WelcomeScreen extends StatelessWidget {
           ],
         ),
       ),
+      // Button to get to the Language and Topic selct dialog
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showDialog(
