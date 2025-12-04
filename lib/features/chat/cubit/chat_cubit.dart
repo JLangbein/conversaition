@@ -1,5 +1,7 @@
 // as chat_gpt to not confuse Message from dash_chat and Messages from
 // chat_gpt_skd and more
+// ignore_for_file: prefer_final_fields
+
 import 'package:chat_gpt_sdk/chat_gpt_sdk.dart' as chat_gpt;
 import 'package:conversaition/const.dart';
 import 'package:conversaition/features/chat/cubit/chat_state.dart';
@@ -11,7 +13,7 @@ class ChatCubit extends Cubit<ChatState> {
   ChatCubit() : super(ChatInitial());
 
   // The displayed Chat Messages (reversed order)
-  final List<ChatMessage> _messages = [];
+  List<ChatMessage> _messages = [];
 
   // The 2nd User aka Chad GPT
   final ChatUser _chatGptUser = ChatUser(
@@ -21,7 +23,7 @@ class ChatCubit extends Cubit<ChatState> {
   );
 
   // To show that someone's typing
-  final List<ChatUser> _typingUsers = [];
+  List<ChatUser> _typingUsers = [];
 
   // The openAI ChatGPT instance
   final openAI = chat_gpt.OpenAI.instance.build(
@@ -29,15 +31,24 @@ class ChatCubit extends Cubit<ChatState> {
     baseOption: chat_gpt.HttpSetup(receiveTimeout: const Duration(seconds: 5)),
   );
 
+  // the chat_gpt assistant
+  late chat_gpt.AssistantData assistantData;
+
+  // the chatGPT thread
+  late chat_gpt.ThreadResponse threadResponse;
+
+  // To start the whole thing off we create an assistant and a thread
+  // give an initial message and run the whole damn thing
   Future<void> initialize(String language, String topic) async {
-    // Create the Language Tutor Assistant
+    // Create the Language Tutor Assistant and retrieve its info
     final assistant = chat_gpt.Assistant(
       model: chat_gpt.Gpt4AModel(),
       name: '$language Tutor',
       instructions: _compilePrompt(language, topic),
     );
+
     try {
-      await openAI.assistant.v2.create(assistant: assistant);
+      assistantData = await openAI.assistant.v2.create(assistant: assistant);
     } catch (e) {
       emit(ChatHasError('$e'));
     }
@@ -46,34 +57,74 @@ class ChatCubit extends Cubit<ChatState> {
     _typingUsers.add(_chatGptUser);
     emit(ChatUpdate(_messages, _typingUsers));
 
-    // Send initial message
-    final request = chat_gpt.ChatCompleteText(
-      model: chat_gpt.Gpt4oMini2024ChatModel(),
-      messages: [
-        chat_gpt.Messages(
-          role: chat_gpt.Role.user,
-          content:
-              '''Give yourself a name in $language and introduce yourself.
-              Ask the user for their name.
-              Ask the user if they want to further narrow down the topic of $topic.
-              ''',
-        ).toJson(),
-      ],
-      maxToken: 1000,
-    );
+    // create the thread and retrieve its info
 
     try {
-      // Awaiting the reponse, check its choices for non-null messages
-      // and add them to the Message list of the chat
-      final response = await openAI.onChatCompletion(request: request);
-      for (var element in response!.choices) {
-        if (element.message != null) {
+      threadResponse = await openAI.threads.v2.createThread(
+        request: chat_gpt.ThreadRequest(),
+      );
+    } catch (e) {
+      emit(ChatHasError('$e'));
+    }
+
+    // send initial message to thread
+    final request = chat_gpt.CreateMessage(
+      role: 'user',
+      content:
+          '''Give yourself a name in $language and introduce yourself.
+        Ask the user for their name.
+        Ask the user if they want to further narrow down the topic of $topic.
+      ''',
+    );
+
+    // sending message to thread
+    await openAI.threads.v2.messages.createMessage(
+      threadId: threadResponse.id,
+      request: request,
+    );
+
+    // run the run
+    final run = chat_gpt.CreateRun(assistantId: assistantData.id);
+
+    // the run info to be stored
+    late chat_gpt.CreateRunResponse runResponse;
+    try {
+      runResponse = await openAI.threads.v2.runs.createRun(
+        threadId: threadResponse.id,
+        request: run,
+      );
+    } catch (e) {
+      emit(ChatHasError('$e'));
+    }
+
+    // check if the run completes successfully
+    late chat_gpt.CreateRunResponse runStatus;
+    do {
+      await Future.delayed(Duration(milliseconds: 200));
+      runStatus = await openAI.threads.v2.runs.retrieveRun(
+        threadId: threadResponse.id,
+        runId: runResponse.id,
+      );
+    } while (runStatus.status != 'completed' && runStatus.status != 'failed');
+
+    // Finally retrieve the message the assistant created from the thread and
+    // add to the chat history
+    try {
+      final responsesList = await openAI.threads.v2.messages.listMessage(
+        threadId: threadResponse.id,
+      );
+      final response = responsesList.data.firstWhere(
+        (m) => m.role == 'assistant' && m.runId == runResponse.id,
+      );
+
+      for (var element in response.content) {
+        if (element.text != null) {
           _messages.insert(
             0,
             ChatMessage(
               user: _chatGptUser,
               createdAt: DateTime.now(),
-              text: element.message!.content,
+              text: element.text!.value,
             ),
           );
         }
@@ -89,6 +140,7 @@ class ChatCubit extends Cubit<ChatState> {
     emit(ChatUpdate(_messages, _typingUsers));
   }
 
+  // helper function for the assistant's instructions
   String _compilePrompt(String language, String topic) {
     String prompt =
         '''You are a friendly personal $language language tutor, helping to improve speaking skills by having a conversation about the topic of $topic. 
@@ -105,6 +157,9 @@ class ChatCubit extends Cubit<ChatState> {
     return prompt;
   }
 
+  // fundamental function for the chat
+  // inserts the user's message in the thread, runs it and retrieves the
+  // response
   Future<void> getResponse(ChatMessage m) async {
     // Add the user's message to chat
     _messages.insert(0, m);
@@ -112,41 +167,57 @@ class ChatCubit extends Cubit<ChatState> {
     _typingUsers.add(_chatGptUser);
     emit(ChatUpdate(_messages, _typingUsers));
 
-    // create request
-    // list of chat messages needs to be inversed
-    // Message.user needs to be transfered to either Role.assistant or Role.user
-    List<Map<String, dynamic>> chatHistory = _messages.reversed.map((m) {
-      if (m.user == _chatGptUser) {
-        return chat_gpt.Messages(
-          role: chat_gpt.Role.assistant,
-          content: m.text,
-        ).toJson();
-      } else {
-        return chat_gpt.Messages(
-          role: chat_gpt.Role.user,
-          content: m.text,
-        ).toJson();
-      }
-    }).toList();
+    // send initial message to thread
+    final request = chat_gpt.CreateMessage(role: 'user', content: m.text);
 
-    final request = chat_gpt.ChatCompleteText(
-      model: chat_gpt.Gpt4oMini2024ChatModel(),
-      messages: chatHistory,
-      maxToken: 1000,
+    // sending message to thread
+    await openAI.threads.v2.messages.createMessage(
+      threadId: threadResponse.id,
+      request: request,
     );
 
+    // run the run
+    final run = chat_gpt.CreateRun(assistantId: assistantData.id);
+
+    // the run info to be stored
+    late chat_gpt.CreateRunResponse runResponse;
     try {
-      // Awaiting the reponse, check its choices for non-null messages
-      // and add them to the Message list of the chat
-      final response = await openAI.onChatCompletion(request: request);
-      for (var element in response!.choices) {
-        if (element.message != null) {
+      runResponse = await openAI.threads.v2.runs.createRun(
+        threadId: threadResponse.id,
+        request: run,
+      );
+    } catch (e) {
+      emit(ChatHasError('$e'));
+    }
+
+    // check if the run completes successfully
+    late chat_gpt.CreateRunResponse runStatus;
+    do {
+      await Future.delayed(Duration(milliseconds: 200));
+      runStatus = await openAI.threads.v2.runs.retrieveRun(
+        threadId: threadResponse.id,
+        runId: runResponse.id,
+      );
+    } while (runStatus.status != 'completed' && runStatus.status != 'failed');
+
+    // Finally retrieve the message the assistant created from the thread and
+    // add to the chat history
+    try {
+      final responsesList = await openAI.threads.v2.messages.listMessage(
+        threadId: threadResponse.id,
+      );
+      final response = responsesList.data.firstWhere(
+        (m) => m.role == 'assistant' && m.runId == runResponse.id,
+      );
+
+      for (var element in response.content) {
+        if (element.text != null) {
           _messages.insert(
             0,
             ChatMessage(
               user: _chatGptUser,
               createdAt: DateTime.now(),
-              text: element.message!.content,
+              text: element.text!.value,
             ),
           );
         }
@@ -160,21 +231,12 @@ class ChatCubit extends Cubit<ChatState> {
 
     // Show Chad's introduction message
     emit(ChatUpdate(_messages, _typingUsers));
+  }
 
-    final reque2t = chat_gpt.ThreadRequest(
-      messages: [
-        {
-          "role": "user",
-          "content": "Hello, what is AI?",
-          "file_ids": ["file-abc123"],
-        },
-        {
-          "role": "user",
-          "content": "How does AI work? Explain it in simple terms.",
-        },
-      ],
-    );
-
-    await openAI.threads.v2.createThread(request: reque2t);
+  // to delete the assistant and thread on restart and app close
+  Future<void> deleteThread() async {
+    await openAI.assistant.v2.delete(assistantId: assistantData.id);
+    await openAI.threads.v2.deleteThread(threadId: threadResponse.id);
+    emit(ChatInitial());
   }
 }

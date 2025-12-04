@@ -27,6 +27,8 @@ class _ChatScreenState extends State<ChatScreen> {
         centerTitle: false,
         primary: true,
         title: Text('${widget.topic} - ${widget.language}'),
+        // Restart Button lets the dialog pop up and hands it the
+        // restart void callback funcion
         actions: [
           Padding(
             padding: const EdgeInsets.fromLTRB(0.0, 0.0, 4.0, 0.0),
@@ -84,7 +86,10 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  void _restart() {
-    Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
+  void _restart() async {
+    await context.read<ChatCubit>().deleteThread();
+    if (mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/welcome', (_) => false);
+    }
   }
 }
